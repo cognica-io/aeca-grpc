@@ -25,10 +25,28 @@ message GetSystemMetricsSnapshotRequest {
   string version = 2;
 }
 
-message SystemMetricsSnapshot {
-  string server_name = 1;
+message ApplicationMetadata {
+  string name = 1;
   string version = 2;
   string persistent_id = 3;
+}
+
+message ClusterInfo {
+  string cluster_name = 1;
+  string cluster_id = 2;
+  repeated NodeInfo nodes = 3;
+}
+
+message NodeInfo {
+  string node_name = 1;
+  string node_id = 2;
+  string node_ip = 3;
+  int32 node_port = 4;
+}
+
+message SystemMetricsSnapshot {
+  ApplicationMetadata app_metadata = 1;
+  ClusterInfo cluster_info = 2;
 }
 
 message GetSystemMetricsSnapshotResponse {
