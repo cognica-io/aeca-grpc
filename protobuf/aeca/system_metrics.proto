@@ -25,8 +25,22 @@ message GetSystemMetricsSnapshotRequest {
   string version = 2;
 }
 
+message GetSystemMetricsSnapshotResponse {
+  enum Status {
+    Success = 0;
+  }
+
+  Status status = 1;
+  SystemMetricsSnapshot snapshot = 2;
+}
+
+message SystemMetricsSnapshot {
+  ApplicationMetadata app_metadata = 1;
+  ClusterInfo cluster_info = 2;
+}
+
 message ApplicationMetadata {
-  string name = 1;
+  string app_name = 1;
   string version = 2;
   string persistent_id = 3;
 }
@@ -42,18 +56,4 @@ message NodeInfo {
   string node_id = 2;
   string node_ip = 3;
   int32 node_port = 4;
-}
-
-message SystemMetricsSnapshot {
-  ApplicationMetadata app_metadata = 1;
-  ClusterInfo cluster_info = 2;
-}
-
-message GetSystemMetricsSnapshotResponse {
-  enum Status {
-    Success = 0;
-  }
-
-  Status status = 1;
-  SystemMetricsSnapshot snapshot = 2;
 }
