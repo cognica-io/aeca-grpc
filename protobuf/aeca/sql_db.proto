@@ -1,0 +1,124 @@
+//
+// Aeca
+//
+// Copyright (c) 2023-2025 Cognica, Inc.
+//
+
+// clang-format off
+// protoc --cpp_out=. sql_db.proto
+// protoc --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_cpp_plugin` sql_db.proto
+// clang-format on
+
+syntax = "proto3";
+
+package aeca.rpc.db.sql;
+
+option cc_enable_arenas = true;
+
+// SQL Database Service with streaming support
+service SQLService {
+  // Execute SQL query and return all results (unary)
+  rpc execute_query(ExecuteQueryRequest) returns (ExecuteQueryResponse) {}
+
+  // Execute SQL query and stream results row by row (server streaming)
+  rpc execute_query_stream(ExecuteQueryRequest) returns (stream QueryRow) {}
+
+  // Execute EXPLAIN and return query plan
+  rpc explain(ExplainRequest) returns (ExplainResponse) {}
+}
+
+// Request message for SQL query execution
+message ExecuteQueryRequest {
+  // SQL query string
+  string query = 1;
+
+  // Optional: maximum number of rows to return (0 = unlimited)
+  int64 max_rows = 2;
+
+  // Optional: batch size for streaming (default: 1000)
+  int64 batch_size = 3;
+}
+
+// Response message for unary query execution
+message ExecuteQueryResponse {
+  // Response status
+  ResponseStatus status = 1;
+
+  // Result rows as JSON strings
+  repeated string rows = 2;
+
+  // Number of rows returned
+  int64 rows_returned = 3;
+
+  // Total rows scanned during query execution
+  int64 total_scanned = 4;
+
+  // Execution time in microseconds
+  int64 execution_time_us = 5;
+}
+
+// Single row for streaming response
+message QueryRow {
+  // Row data as JSON string
+  string data = 1;
+
+  // Row index (0-based)
+  int64 index = 2;
+
+  // Is this the last row?
+  bool is_last = 3;
+
+  // Running statistics
+  StreamStats stats = 4;
+}
+
+// Streaming statistics
+message StreamStats {
+  // Total rows returned so far
+  int64 rows_returned = 1;
+
+  // Total rows scanned so far
+  int64 total_scanned = 2;
+
+  // Elapsed time in microseconds
+  int64 elapsed_us = 3;
+}
+
+// Request message for EXPLAIN
+message ExplainRequest {
+  // SQL query to explain
+  string query = 1;
+
+  // Include execution statistics (EXPLAIN ANALYZE)
+  bool analyze = 2;
+}
+
+// Response message for EXPLAIN
+message ExplainResponse {
+  // Response status
+  ResponseStatus status = 1;
+
+  // Query plan as JSON string
+  string plan = 2;
+
+  // Execution time in microseconds (if analyze=true)
+  int64 execution_time_us = 3;
+}
+
+// Common response status
+message ResponseStatus {
+  // Status code
+  StatusCode code = 1;
+
+  // Error message (if code != OK)
+  string message = 2;
+}
+
+// Status codes
+enum StatusCode {
+  kOK = 0;
+  kInvalidArgument = 1;
+  kNotFound = 2;
+  kInternalError = 3;
+  kCancelled = 4;
+}
