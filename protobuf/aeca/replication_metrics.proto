@@ -17,26 +17,27 @@ option cc_enable_arenas = true;
 
 service ReplicationMetricsService {
   // Get current metrics snapshot
-  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse) {}
+  rpc get_metrics(GetMetricsRequest) returns (GetMetricsResponse) {}
 
   // Get metrics for a specific node
-  rpc GetNodeMetrics(GetNodeMetricsRequest) returns (GetNodeMetricsResponse) {}
+  rpc get_node_metrics(GetNodeMetricsRequest) returns (GetNodeMetricsResponse) {
+  }
 
   // Reset all counters (for testing/debugging)
-  rpc ResetMetrics(ResetMetricsRequest) returns (ResetMetricsResponse) {}
+  rpc reset_metrics(ResetMetricsRequest) returns (ResetMetricsResponse) {}
 
   // Get cluster status (for admin CLI)
-  rpc GetClusterStatus(GetClusterStatusRequest)
+  rpc get_cluster_status(GetClusterStatusRequest)
       returns (GetClusterStatusResponse) {}
 
   // Add a new node to the cluster (primary only)
-  rpc AddNode(AddNodeRequest) returns (AddNodeResponse) {}
+  rpc add_node(AddNodeRequest) returns (AddNodeResponse) {}
 
   // Remove a node from the cluster (primary only)
-  rpc RemoveNode(RemoveNodeRequest) returns (RemoveNodeResponse) {}
+  rpc remove_node(RemoveNodeRequest) returns (RemoveNodeResponse) {}
 
   // Trigger manual failover (primary only)
-  rpc TriggerFailover(TriggerFailoverRequest)
+  rpc trigger_failover(TriggerFailoverRequest)
       returns (TriggerFailoverResponse) {}
 }
 
@@ -46,9 +47,9 @@ message GetMetricsRequest {
 
 message GetMetricsResponse {
   enum Status {
-    Invalid = 0;
-    Success = 1;
-    Error = 2;
+    kInvalid = 0;
+    kSuccess = 1;
+    kError = 2;
   }
 
   Status status = 1;
@@ -62,10 +63,10 @@ message GetNodeMetricsRequest {
 
 message GetNodeMetricsResponse {
   enum Status {
-    Invalid = 0;
-    Success = 1;
-    NodeNotFound = 2;
-    Error = 3;
+    kInvalid = 0;
+    kSuccess = 1;
+    kNodeNotFound = 2;
+    kError = 3;
   }
 
   Status status = 1;
@@ -77,9 +78,9 @@ message ResetMetricsRequest {}
 
 message ResetMetricsResponse {
   enum Status {
-    Invalid = 0;
-    Success = 1;
-    Error = 2;
+    kInvalid = 0;
+    kSuccess = 1;
+    kError = 2;
   }
 
   Status status = 1;
@@ -183,10 +184,10 @@ message GetClusterStatusRequest {}
 
 message NodeInfo {
   enum Role {
-    UNKNOWN = 0;
-    PRIMARY = 1;
-    SECONDARY = 2;
-    RECOVERING = 3;
+    kUnknown = 0;
+    kPrimary = 1;
+    kSecondary = 2;
+    kRecovering = 3;
   }
 
   string node_id = 1;
@@ -208,9 +209,9 @@ message RaftStatus {
 
 message GetClusterStatusResponse {
   enum Status {
-    Invalid = 0;
-    Success = 1;
-    Error = 2;
+    kInvalid = 0;
+    kSuccess = 1;
+    kError = 2;
   }
 
   Status status = 1;
@@ -234,11 +235,11 @@ message AddNodeRequest {
 
 message AddNodeResponse {
   enum Status {
-    Invalid = 0;
-    Success = 1;
-    NotPrimary = 2;
-    NodeAlreadyExists = 3;
-    Error = 4;
+    kInvalid = 0;
+    kSuccess = 1;
+    kNotPrimary = 2;
+    kNodeAlreadyExists = 3;
+    kError = 4;
   }
 
   Status status = 1;
@@ -251,13 +252,13 @@ message RemoveNodeRequest {
 
 message RemoveNodeResponse {
   enum Status {
-    Invalid = 0;
-    Success = 1;
-    NotPrimary = 2;
-    NodeNotFound = 3;
-    CannotRemoveSelf = 4;
-    CannotRemoveLastNode = 5;
-    Error = 6;
+    kInvalid = 0;
+    kSuccess = 1;
+    kNotPrimary = 2;
+    kNodeNotFound = 3;
+    kCannotRemoveSelf = 4;
+    kCannotRemoveLastNode = 5;
+    kError = 6;
   }
 
   Status status = 1;
@@ -270,13 +271,13 @@ message TriggerFailoverRequest {
 
 message TriggerFailoverResponse {
   enum Status {
-    Invalid = 0;
-    Success = 1;
-    NotPrimary = 2;
-    TargetNodeNotFound = 3;
-    TargetNodeNotActive = 4;
-    RaftNotInitialized = 5;
-    Error = 6;
+    kInvalid = 0;
+    kSuccess = 1;
+    kNotPrimary = 2;
+    kTargetNodeNotFound = 3;
+    kTargetNodeNotActive = 4;
+    kRaftNotInitialized = 5;
+    kError = 6;
   }
 
   Status status = 1;
