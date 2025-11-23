@@ -1,0 +1,284 @@
+//
+// Aeca Server
+//
+// Copyright (c) 2023-2025 Cognica, Inc.
+//
+
+// clang-format off
+// protoc --cpp_out=. replication_metrics.proto
+// protoc --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_cpp_plugin` replication_metrics.proto
+// clang-format on
+
+syntax = "proto3";
+
+package aeca.replication.rpc;
+
+option cc_enable_arenas = true;
+
+service ReplicationMetricsService {
+  // Get current metrics snapshot
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse) {}
+
+  // Get metrics for a specific node
+  rpc GetNodeMetrics(GetNodeMetricsRequest) returns (GetNodeMetricsResponse) {}
+
+  // Reset all counters (for testing/debugging)
+  rpc ResetMetrics(ResetMetricsRequest) returns (ResetMetricsResponse) {}
+
+  // Get cluster status (for admin CLI)
+  rpc GetClusterStatus(GetClusterStatusRequest)
+      returns (GetClusterStatusResponse) {}
+
+  // Add a new node to the cluster (primary only)
+  rpc AddNode(AddNodeRequest) returns (AddNodeResponse) {}
+
+  // Remove a node from the cluster (primary only)
+  rpc RemoveNode(RemoveNodeRequest) returns (RemoveNodeResponse) {}
+
+  // Trigger manual failover (primary only)
+  rpc TriggerFailover(TriggerFailoverRequest)
+      returns (TriggerFailoverResponse) {}
+}
+
+message GetMetricsRequest {
+  bool include_histograms = 1;
+}
+
+message GetMetricsResponse {
+  enum Status {
+    Invalid = 0;
+    Success = 1;
+    Error = 2;
+  }
+
+  Status status = 1;
+  string error_message = 2;
+  MetricsSnapshot snapshot = 3;
+}
+
+message GetNodeMetricsRequest {
+  string node_id = 1;
+}
+
+message GetNodeMetricsResponse {
+  enum Status {
+    Invalid = 0;
+    Success = 1;
+    NodeNotFound = 2;
+    Error = 3;
+  }
+
+  Status status = 1;
+  string error_message = 2;
+  NodeMetrics metrics = 3;
+}
+
+message ResetMetricsRequest {}
+
+message ResetMetricsResponse {
+  enum Status {
+    Invalid = 0;
+    Success = 1;
+    Error = 2;
+  }
+
+  Status status = 1;
+  string error_message = 2;
+}
+
+message MetricsSnapshot {
+  // Transaction metrics
+  TransactionMetrics transaction_metrics = 1;
+
+  // Network metrics
+  NetworkMetrics network_metrics = 2;
+
+  // Consistency metrics
+  ConsistencyMetrics consistency_metrics = 3;
+
+  // Election metrics
+  ElectionMetrics election_metrics = 4;
+
+  // Heartbeat metrics
+  HeartbeatMetrics heartbeat_metrics = 5;
+
+  // Current state (gauges)
+  GaugeMetrics gauge_metrics = 6;
+
+  // Latency percentiles
+  LatencyPercentiles commit_latency = 7;
+  LatencyPercentiles replication_latency = 8;
+
+  // Timestamp of snapshot (Unix epoch milliseconds)
+  int64 timestamp_ms = 9;
+}
+
+message TransactionMetrics {
+  uint64 total_transactions_replicated = 1;
+  uint64 total_transactions_failed = 2;
+  uint64 total_bytes_replicated = 3;
+  double transactions_per_second = 4;
+}
+
+message NetworkMetrics {
+  uint64 total_messages_sent = 1;
+  uint64 total_messages_received = 2;
+  uint64 total_bytes_sent = 3;
+  uint64 total_bytes_received = 4;
+  uint32 network_errors = 5;
+  double messages_per_second = 6;
+}
+
+message ConsistencyMetrics {
+  uint32 gaps_detected = 1;
+  uint32 gaps_recovered = 2;
+  uint32 snapshots_sent = 3;
+  uint32 snapshots_received = 4;
+  uint32 out_of_order_detected = 5;
+}
+
+message ElectionMetrics {
+  uint32 elections_started = 1;
+  uint32 elections_completed = 2;
+  uint32 role_changes = 3;
+}
+
+message HeartbeatMetrics {
+  uint64 heartbeats_sent = 1;
+  uint64 heartbeats_received = 2;
+  uint32 heartbeat_failures = 3;
+}
+
+message GaugeMetrics {
+  int64 replication_lag_ms = 1;
+  int32 connected_nodes = 2;
+  string current_role = 3;
+  uint64 current_sequence_number = 4;
+  uint64 applied_sequence_number = 5;
+  int32 message_queue_depth = 6;
+}
+
+message LatencyPercentiles {
+  int64 p50_us = 1;   // p50 in microseconds
+  int64 p95_us = 2;   // p95 in microseconds
+  int64 p99_us = 3;   // p99 in microseconds
+  int64 p999_us = 4;  // p999 in microseconds
+  int64 max_us = 5;   // max in microseconds
+}
+
+message NodeMetrics {
+  string node_id = 1;
+  bool is_connected = 2;
+  int64 last_heartbeat_ago_ms = 3;
+  uint64 bytes_sent = 4;
+  uint64 bytes_received = 5;
+  uint64 messages_sent = 6;
+  uint64 messages_received = 7;
+  int64 replication_lag_ms = 8;
+}
+
+// Cluster management messages
+
+message GetClusterStatusRequest {}
+
+message NodeInfo {
+  enum Role {
+    UNKNOWN = 0;
+    PRIMARY = 1;
+    SECONDARY = 2;
+    RECOVERING = 3;
+  }
+
+  string node_id = 1;
+  string host = 2;
+  int32 port = 3;
+  Role role = 4;
+  bool is_active = 5;
+  int64 heartbeat_ago_ms = 6;
+  uint64 latest_sequence_number = 7;
+}
+
+message RaftStatus {
+  int64 term = 1;
+  string leader_id = 2;
+  uint64 committed_index = 3;
+  uint64 applied_index = 4;
+  uint64 last_log_index = 5;
+}
+
+message GetClusterStatusResponse {
+  enum Status {
+    Invalid = 0;
+    Success = 1;
+    Error = 2;
+  }
+
+  Status status = 1;
+  string error_message = 2;
+
+  // Current node info
+  NodeInfo current_node = 3;
+
+  // All nodes in cluster
+  repeated NodeInfo nodes = 4;
+
+  // Raft status
+  RaftStatus raft_status = 5;
+}
+
+message AddNodeRequest {
+  string node_id = 1;
+  string host = 2;
+  int32 port = 3;
+}
+
+message AddNodeResponse {
+  enum Status {
+    Invalid = 0;
+    Success = 1;
+    NotPrimary = 2;
+    NodeAlreadyExists = 3;
+    Error = 4;
+  }
+
+  Status status = 1;
+  string error_message = 2;
+}
+
+message RemoveNodeRequest {
+  string node_id = 1;
+}
+
+message RemoveNodeResponse {
+  enum Status {
+    Invalid = 0;
+    Success = 1;
+    NotPrimary = 2;
+    NodeNotFound = 3;
+    CannotRemoveSelf = 4;
+    CannotRemoveLastNode = 5;
+    Error = 6;
+  }
+
+  Status status = 1;
+  string error_message = 2;
+}
+
+message TriggerFailoverRequest {
+  string target_node_id = 1;  // Empty string means auto-select
+}
+
+message TriggerFailoverResponse {
+  enum Status {
+    Invalid = 0;
+    Success = 1;
+    NotPrimary = 2;
+    TargetNodeNotFound = 3;
+    TargetNodeNotActive = 4;
+    RaftNotInitialized = 5;
+    Error = 6;
+  }
+
+  Status status = 1;
+  string error_message = 2;
+}
